@@ -1,16 +1,3 @@
-# This is a sample Python script.
+from audio_measure_functions import get_loneliness_index
 
-# Press ⌃R to execute it or replace it with your code.
-# Press Double ⇧ to search everywhere for classes, files, tool windows, actions, and settings.
-
-
-def print_hi(name):
-    # Use a breakpoint in the code line below to debug your script.
-    print(f'Hi, {name}')  # Press ⌘F8 to toggle the breakpoint.
-
-
-# Press the green button in the gutter to run the script.
-if __name__ == '__main__':
-    print_hi('PyCharm')
-
-# See PyCharm help at https://www.jetbrains.com/help/pycharm/
+[loneliness_index, sent_score, filler_score, pitch_score, formant2_score, pause_score, text] = get_loneliness_index('/Users/macayla.donegan/Documents/Code/Audio/LonelinessIndex/messagingFolder_NA1000018645/01-06-2023.m4a', verbose=True)

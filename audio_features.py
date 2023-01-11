@@ -1,6 +1,8 @@
 import numpy as np
 import warnings
+
 warnings.filterwarnings('ignore')
+
 import librosa
 import parselmouth
 from parselmouth import praat
@@ -125,3 +127,52 @@ def get_intensity(file_name):
     intensity_score=np.nanmean(intensity)/10
 
     return intensity_score
+
+def get_f0(audio_data, samplerate):
+
+    fft_spectrum = np.fft.rfft(audio_data)
+    freq = np.fft.rfftfreq(audio_data.size, d=1. / samplerate)
+    fft_spectrum_abs = np.abs(fft_spectrum)
+
+    ##get rid of 60 hz noise
+    for i, f in enumerate(freq):
+        if f < 62 and f > 58:  # (1)
+            fft_spectrum[i] = 0.0
+        if f < 21 or f > 20000:  # (2)
+            fft_spectrum[i] = 0.0
+
+    f0_max = max(fft_spectrum_abs[np.where(freq < 3000)])
+
+    if freq[np.where(fft_spectrum_abs == f0_max)][0] > 0:
+        f0_score = 100 / freq[np.where(fft_spectrum_abs == f0_max)][0]
+    else:
+        f0_score = np.nan
+    return f0_score
+
+def get_shimmer(file_name):
+    sound = parselmouth.Sound(file_name)
+    pitch = sound.to_pitch()
+    pointProcess = parselmouth.praat.call(sound, "To PointProcess (periodic, cc)...", 75, 600)
+    pulse = parselmouth.praat.call([sound, pitch], "To PointProcess (cc)")
+
+    parselmouth.praat.call([sound, pitch, pulse], "Voice report", 0, 0, 75, 600, 1.3, 1.6, 0.03, 0.45)
+
+    shimmer_score = .1 / parselmouth.praat.call([sound, pointProcess], "Get shimmer (local)", 0, 0, 0.0001, 0.02, 1.3,
+                                                1.6)
+    return shimmer_score
+
+def get_number_of_pauses(audio_data,samplerate):
+    total_recording_time = len(audio_data) / samplerate
+
+    pauses = librosa.effects.split(audio_data, top_db=20)
+    pause_score = len(pauses) / (total_recording_time)
+    return pause_score
+
+def get_hnr(file_name):
+    sound = parselmouth.Sound(file_name)
+    harmonicity = sound.to_harmonicity()
+    harmonicity.values[harmonicity.values == -200] = np.nan
+    hnr_score = np.nanmean(harmonicity) * .1
+
+    return hnr_score
+
